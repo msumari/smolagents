@@ -13,6 +13,7 @@ specific language governing permissions and limitations under the License.
 rendered properly in your Markdown viewer.
 
 -->
+
 # Agents - 导览
 
 [[open-in-colab]]
@@ -30,15 +31,16 @@ rendered properly in your Markdown viewer.
 要初始化一个最小化的 agent，您至少需要以下两个参数：
 
 - `model`，一个为您的 agent 提供动力的文本生成模型 - 因为 agent 与简单的 LLM 不同，它是一个使用 LLM 作为引擎的系统。您可以使用以下任一选项：
-    - [`TransformersModel`] 使用预初始化的 `transformers` 管道在本地机器上运行推理
-    - [`HfApiModel`] 在底层使用 `huggingface_hub.InferenceClient`
-    - [`LiteLLMModel`] 让您通过 [LiteLLM](https://docs.litellm.ai/) 调用 100+ 不同的模型！
-    - [`AzureOpenAIServerModel`] 允许您使用部署在 [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) 中的 OpenAI 模型。
-    - [`MLXModel`] 可创建 [mlx-lm](https://pypi.org/project/mlx-lm/) 流水线，以便在本地机器上运行推理。
+
+  - [`TransformersModel`] 使用预初始化的 `transformers` 管道在本地机器上运行推理
+  - [`HfApiModel`] 在底层使用 `huggingface_hub.InferenceClient`
+  - [`LiteLLMModel`] 让您通过 [LiteLLM](https://docs.litellm.ai/) 调用 100+ 不同的模型！
+  - [`AzureOpenAIServerModel`] 允许您使用部署在 [Azure](https://azure.microsoft.com/en-us/products/ai-services/openai-service) 中的 OpenAI 模型。
+  - [`MLXModel`] 可创建 [mlx-lm](https://pypi.org/project/mlx-lm/) 流水线，以便在本地机器上运行推理。
 
 - `tools`，agent 可以用来解决任务的 `Tools` 列表。它可以是一个空列表。您还可以通过定义可选参数 `add_base_tools=True` 在您的 `tools` 列表之上添加默认工具箱。
 
-一旦有了这两个参数 `tools` 和 `model`，您就可以创建一个 agent 并运行它。您可以使用任何您喜欢的 LLM，无论是通过 [Hugging Face API](https://huggingface.co/docs/api-inference/en/index)、[transformers](https://github.com/huggingface/transformers/)、[ollama](https://ollama.com/)、[LiteLLM](https://www.litellm.ai/)、[Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service)，还是[mlx-lm](https://pypi.org/project/mlx-lm/).。
+一旦有了这两个参数 `tools` 和 `model`，您就可以创建一个 agent 并运行它。您可以使用任何您喜欢的 LLM，无论是通过 [Hugging Face API](https://huggingface.co/docs/api-inference/en/index)、[transformers](https://github.com/huggingface/transformers/)、[ollama](https://ollama.com/)、[LiteLLM](https://www.litellm.ai/)、[Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service)，[mlx-lm](https://pypi.org/project/mlx-lm/), 还是 [Amazon Bedrock](https://aws.amazon.com/bedrock/).。
 
 <hfoptions id="选择一个LLM">
 <hfoption id="Hugging Face API">
@@ -59,6 +61,7 @@ agent.run(
     "Could you give me the 118th number in the Fibonacci sequence?",
 )
 ```
+
 </hfoption>
 <hfoption id="本地Transformers模型">
 
@@ -75,6 +78,7 @@ agent.run(
     "Could you give me the 118th number in the Fibonacci sequence?",
 )
 ```
+
 </hfoption>
 <hfoption id="OpenAI或Anthropic API">
 
@@ -91,6 +95,7 @@ agent.run(
     "Could you give me the 118th number in the Fibonacci sequence?",
 )
 ```
+
 </hfoption>
 <hfoption id="Ollama">
 
@@ -111,6 +116,7 @@ agent.run(
     "Could you give me the 118th number in the Fibonacci sequence?",
 )
 ```
+
 </hfoption>
 <hfoption id="Azure OpenAI">
 
@@ -168,6 +174,19 @@ agent.run("Could you give me the 118th number in the Fibonacci sequence?")
 ```
 
 </hfoption>
+<hfoption id="Bedrock">
+
+```python
+# !pip install smolagents[litellm]
+from smolagents import CodeAgent, DuckDuckGoSearchTool, LiteLLMModel
+
+model = LiteLLMModel(model_id="bedrock/us.amazon.nova-lite-v1:0")
+agent = CodeAgent(tools=[DuckDuckGoSearchTool()], model=model)
+
+agent.run("Could you give me the 118th number in the Fibonacci sequence?")
+```
+
+</hfoption>
 </hfoptions>
 
 #### CodeAgent 和 ToolCallingAgent
@@ -210,12 +229,14 @@ agent.run("Could you get me the title of the page at url 'https://huggingface.co
 ### 检查 agent 运行
 
 以下是一些有用的属性，用于检查运行后发生了什么：
+
 - `agent.logs` 存储 agent 的细粒度日志。在 agent 运行的每一步，所有内容都会存储在一个字典中，然后附加到 `agent.logs` 中。
 - 运行 `agent.write_memory_to_messages()` 会为 LLM 创建一个 agent 日志的内部内存，作为聊天消息列表。此方法会遍历日志的每一步，并仅存储它感兴趣的内容作为消息：例如，它会将系统提示和任务存储为单独的消息，然后对于每一步，它会将 LLM 输出存储为一条消息，工具调用输出存储为另一条消息。如果您想要更高级别的视图 - 但不是每个日志都会被此方法转录。
 
 ## 工具
 
 工具是 agent 使用的原子函数。为了被 LLM 使用，它还需要一些构成其 API 的属性，这些属性将用于向 LLM 描述如何调用此工具：
+
 - 名称
 - 描述
 - 输入类型和描述
@@ -283,13 +304,15 @@ def model_download_tool(task: str) -> str:
 ```
 
 该函数需要：
+
 - 一个清晰的名称。名称应该足够描述此工具的功能，以帮助为 agent 提供动力的 LLM。由于此工具返回任务下载量最多的模型，我们将其命名为 `model_download_tool`。
 - 输入和输出的类型提示
 - 一个描述，其中包括一个 'Args:' 部分，其中每个参数都被描述（这次没有类型指示，它将从类型提示中提取）。与工具名称一样，此描述是为您的 agent 提供动力的 LLM 的说明书，所以不要忽视它。
-所有这些元素将在初始化时自动嵌入到 agent 的系统提示中：因此要努力使它们尽可能清晰！
+  所有这些元素将在初始化时自动嵌入到 agent 的系统提示中：因此要努力使它们尽可能清晰！
 
 > [!TIP]
 > 此定义格式与 `apply_chat_template` 中使用的工具模式相同，唯一的区别是添加了 `tool` 装饰器：[这里](https://huggingface.co/blog/unified-tool-use#passing-tools-to-a-chat-template) 了解更多关于我们的工具使用 API。
+
 </hfoption>
 <hfoption id="子类化Tool">
 
@@ -308,16 +331,17 @@ class ModelDownloadTool(Tool):
 ```
 
 子类需要以下属性：
+
 - 一个清晰的 `name`。名称应该足够描述此工具的功能，以帮助为 agent 提供动力的 LLM。由于此工具返回任务下载量最多的模型，我们将其命名为 `model_download_tool`。
 - 一个 `description`。与 `name` 一样，此描述是为您的 agent 提供动力的 LLM 的说明书，所以不要忽视它。
 - 输入类型和描述
 - 输出类型
-所有这些属性将在初始化时自动嵌入到 agent 的系统提示中：因此要努力使它们尽可能清晰！
-</hfoption>
+  所有这些属性将在初始化时自动嵌入到 agent 的系统提示中：因此要努力使它们尽可能清晰！
+    </hfoption>
 </hfoptions>
 
-
 然后您可以直接初始化您的 agent：
+
 ```py
 from smolagents import CodeAgent, HfApiModel
 agent = CodeAgent(tools=[model_download_tool], model=HfApiModel())
@@ -327,6 +351,7 @@ agent.run(
 ```
 
 您将获得以下日志：
+
 ```text
 ╭──────────────────────────────────────── New run ─────────────────────────────────────────╮
 │                                                                                          │
@@ -392,7 +417,6 @@ manager_agent.run("Who is the CEO of Hugging Face?")
 > [!TIP]
 > 有关高效多 agent 实现的深入示例，请参阅 [我们如何将多 agent 系统推向 GAIA 排行榜的顶部](https://huggingface.co/blog/beating-gaia)。
 
-
 ## 与您的 agent 交谈并在酷炫的 Gradio 界面中可视化其思考过程
 
 您可以使用 `GradioUI` 交互式地向您的 agent 提交任务并观察其思考和执行过程，以下是一个示例：
@@ -423,19 +447,20 @@ GradioUI(agent).launch()
 
 ## 下一步
 
-最后，当您按需配置好agent后，即可将其分享至 Hub！
+最后，当您按需配置好 agent 后，即可将其分享至 Hub！
 
 ```py
 agent.push_to_hub("m-ric/my_agent")
 ```
 
-类似地，若要加载已推送至 Hub 的agent，在信任其工具代码的前提下，可使用：
+类似地，若要加载已推送至 Hub 的 agent，在信任其工具代码的前提下，可使用：
 
 ```py
 agent.from_hub("m-ric/my_agent", trust_remote_code=True)
 ```
 
 要更深入地使用，您将需要查看我们的教程：
+
 - [我们的代码 agent 如何工作的解释](./tutorials/secure_code_execution)
 - [本指南关于如何构建好的 agent](./tutorials/building_good_agents)。
 - [工具使用的深入指南](./tutorials/tools)。
